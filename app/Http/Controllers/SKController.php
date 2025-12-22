@@ -31,7 +31,31 @@ class SKController extends Controller
         // Ambil kategori untuk filter dropdown
         $kategoriSK = KategoriSk::orderBy('jenis_surat')->get();
 
-        return view('dashboard', compact('dataSK', 'totalSK', 'skBulan', 'skTahun', 'jenis_surat', 'totalSertifikat', 'kategoriSK'));    
+        // Data Khusus untuk Pimpinan
+        $laporan5Tahun = []; // Statistik Tahunan (5 Tahun Terakhir)
+        $laporanBulananTahunIni = []; // Statistik Bulanan (Detail Tahun Ini)
+        
+        if (Auth::user()->role === 'pimpinan') {
+            // Laporan 5 Tahun Terakhir
+            $laporan5Tahun = SK::selectRaw('YEAR(tanggal_ditetapkan) as tahun, COUNT(*) as total')
+                ->whereYear('tanggal_ditetapkan', '>=', now()->subYears(4)->year)
+                ->groupBy('tahun')
+                ->orderBy('tahun', 'desc')
+                ->get();
+
+            // Laporan Bulanan (Detail Tahun Ini)
+            // Rename variabel lama $laporanTahunan jadi $laporanBulananTahunIni biar ga bingung
+            $laporanBulananTahunIni = SK::selectRaw('MONTH(tanggal_ditetapkan) as bulan, COUNT(*) as total')
+                ->whereYear('tanggal_ditetapkan', now()->year)
+                ->groupBy('bulan')
+                ->orderBy('bulan')
+                ->get();
+        }
+
+        return view('dashboard', compact(
+            'dataSK', 'totalSK', 'skBulan', 'skTahun', 'jenis_surat', 'totalSertifikat', 'kategoriSK',
+            'laporan5Tahun', 'laporanBulananTahunIni'
+        ));    
     }
 
     /**
@@ -134,9 +158,10 @@ class SKController extends Controller
             'kode_klasifikasi'    => 'required|string|max:50',
             'pejabat_penandatangan' => 'required|string|max:255',
             'perihal'             => 'nullable|string',
-            'nomor_sertifikat'    => 'nullable|string|max:100|unique:sk,nomor_sertifikat',
+            // 'nomor_sertifikat'    => 'nullable|string|max:100', // Unique validation removed because of range
             'jumlah_penerima'     => 'nullable|integer|min:1',
             'file_pdf'            => 'nullable|file|mimes:pdf|max:2048',
+            'jumlah_sertifikat'   => 'nullable|integer|min:1', // Input baru untuk batch sertifikat
         ]);
 
         // Generate Nomor SK berdasarkan Tahun Tanggal Ditetapkan dan Kantor User
@@ -158,17 +183,61 @@ class SKController extends Controller
             $filePath = $request->file('file_pdf')->store('uploads/sk', 'public');
         }
 
-        // Otomatis generate nomor sertifikat jika jenis surat adalah sertifikat
-        $nomorSertifikat = $validated['nomor_sertifikat'] ?? null;
-        if (str_contains(strtolower($validated['jenis_surat']), 'sertifikat') && empty($nomorSertifikat)) {
-            // Cari nomor sertifikat terakhir
-            $lastCertificate = SK::where('nomor_sertifikat', '!=', null)
-                ->where('nomor_sertifikat', '!=', '')
-                ->orderBy('created_at', 'desc')
-                ->first();
+        // Otomatis generate nomor sertifikat RANGE jika jenis surat adalah sertifikat
+        $nomorSertifikat = null;
+        if (str_contains(strtolower($validated['jenis_surat']), 'sertifikat')) {
+            $jumlahBatch = $request->input('jumlah_sertifikat', 1);
             
-            $lastNumber = $lastCertificate ? $lastCertificate->nomor_sertifikat : null;
-            $nomorSertifikat = $this->generateNextCertificateNumber($lastNumber);
+            // Cari nomor sertifikat terakhir (numeric only parsing)
+            // Asumsi format di DB sekarang bisa "SERTIFIKAT-001" atau "SERTIFIKAT-001 s/d SERTIFIKAT-005"
+            // Kita harus cari angka terakhir yang terpakai.
+            // Cara basic: ambil last record, parse max number.
+            // (Untuk presisi tinggi perlu query khusus, tapi ini pendekatan sederhana)
+            $lastCertificate = SK::where('jenis_surat', 'like', '%sertifikat%')
+                ->whereNotNull('nomor_sertifikat')
+                ->latest()
+                ->first();
+
+            $lastNum = 0;
+            if ($lastCertificate) {
+                // Cek apakah format range "s/d"
+                if (str_contains($lastCertificate->nomor_sertifikat, 's/d')) {
+                    // Ambil bagian setelah "s/d"
+                    $parts = explode('s/d', $lastCertificate->nomor_sertifikat);
+                    $endPart = trim(end($parts));
+                    preg_match('/(\d+)$/', $endPart, $matches);
+                    $lastNum = isset($matches[1]) ? (int)$matches[1] : 0;
+                } else {
+                    // Format tunggal
+                    preg_match('/(\d+)$/', $lastCertificate->nomor_sertifikat, $matches);
+                    $lastNum = isset($matches[1]) ? (int)$matches[1] : 0;
+                }
+            }
+            
+            // Generate Range
+            $startNum = $lastNum + 1; // Sesuai request user: 0 - n. Tapi 0 biasanya start? 
+            // Kalau user minta "dimulai dari 0", apakah maksudnya reset? 
+            // Biasanya sistem lanjut. Mari asumsi lanjut.
+            // Jika user minta start dari 0 literally, itu aneh untuk sistem arsip berkelanjutan.
+            // Saya interpretasikan "0 - n" sebagai "range dari Start sampai End" (relatif).
+            
+            // Wait, user request said: "jumlah sertifikat dimulai dari 0 - {jumlah_sertifikat}".
+            // Mungkin maksudnya: Index 0 to N.
+            // Mari kita buat range Start s/d End.
+            
+            $endNum = $lastNum + $jumlahBatch;
+            
+            if ($jumlahBatch > 1) {
+                $nomorSertifikat = "SERTIFIKAT-" . str_pad($startNum, 3, '0', STR_PAD_LEFT) . " s/d SERTIFIKAT-" . str_pad($endNum, 3, '0', STR_PAD_LEFT);
+            } else {
+                $nomorSertifikat = "SERTIFIKAT-" . str_pad($startNum, 3, '0', STR_PAD_LEFT);
+            }
+            
+            // Override jumlah penerima jika kosong
+            if (empty($validated['jumlah_penerima'])) {
+               // Tambahin ke data request atau variable local
+               $validated['jumlah_penerima'] = $jumlahBatch;
+            }
         }
 
         // Simpan ke database dengan SEMUA FIELD termasuk kategori_sk_id

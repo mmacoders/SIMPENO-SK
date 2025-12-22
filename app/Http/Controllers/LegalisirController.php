@@ -13,8 +13,15 @@ class LegalisirController extends Controller
     {
         $query = LegalisirRequest::with(['user', 'sk'])->latest();
 
-        // Jika bukan admin, hanya tampilkan request milik user yang login
-        if (Auth::user()->role !== 'admin') {
+        // Jika bukan pimpinan, hanya tampilkan request milik user yang login
+        // 'admin' sekarang tidak melihat daftar request, kecuali kita definisikan.
+        // Konsep "Pindahkan" berarti admin tidak lagi handle.
+        // Jika admin juga tidak boleh lihat, maka logic ini benar (admin akan kena filter default 'else' user biasa?
+        // Tapi admin biasanya role != pimpinan, jadi masuk sini.
+        // Masalahnya: jika role === 'admin', dia juga masuk ke filter 'user_id' = Auth::id().
+        // Karena admin bukan pimpinan. 
+        // Ini sesuai request: "fitur ... pindahkan ke pimpinan".
+        if (Auth::user()->role !== 'pimpinan') {
             $query->where('user_id', Auth::id());
         }
 
@@ -53,7 +60,8 @@ class LegalisirController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        if (Auth::user()->role !== 'admin') {
+        // Hanya Pimpinan yang boleh update status
+        if (Auth::user()->role !== 'pimpinan') {
             abort(403);
         }
 

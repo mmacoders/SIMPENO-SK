@@ -126,31 +126,23 @@
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Terakhir</label>
-                                <input type="text" id="lastCertificateNumber"
-                                    class="block w-full bg-gray-100 border-gray-300 rounded-lg text-gray-500 shadow-sm sm:text-sm"
-                                    value="{{ $lastCertificateNumber ?? 'Belum ada sertifikat' }}" readonly>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Sertifikat Terakhir</label>
+                                <input type="number" name="jumlah_sertifikat" id="jumlahSertifikatInput" min="1"
+                                    class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    placeholder="Masukkan jumlah sertifikat..." value="{{ old('jumlah_sertifikat') }}">
+                                <p class="text-xs text-gray-500 mt-1">Masukkan jumlah sertifikat yang akan dibuat.</p>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Sertifikat Baru</label>
-                                <input type="text" name="nomor_sertifikat" id="newCertificateNumber"
-                                    class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    placeholder="Generate otomatis..." value="{{ old('nomor_sertifikat') }}">
-                                <p class="text-xs text-blue-600 mt-1"><i class="fa-solid fa-circle-info mr-1"></i> Akan diisi otomatis oleh sistem</p>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Kode Otomatis</label>
+                                <input type="text" id="previewKodeOtomatis"
+                                    class="block w-full bg-gray-100 border-gray-300 rounded-lg text-gray-500 shadow-sm sm:text-sm"
+                                    value="SERTIFIKAT-..." readonly>
+                                <p class="text-xs text-blue-600 mt-1" id="previewRangeText">Akan mulai dari 0 - n</p>
                             </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Penerima (Opsional)</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fa-solid fa-users text-gray-400"></i>
-                                    </div>
-                                    <input type="number" name="jumlah_penerima" min="1"
-                                        class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                        placeholder="Masukkan total penerima..." value="{{ old('jumlah_penerima') }}">
-                                </div>
-                            </div>
+                            
+                            <!-- Hidden input untuk menyimpan nomor start/last (optional, jika perlu di controller) -->
+                            <input type="hidden" id="lastCertNumDb" value="{{ $lastCertificateNumber ?? 'SERTIFIKAT-000' }}">
                         </div>
                     </div>
 
@@ -228,8 +220,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const jenisSuratSelect = document.getElementById('jenisSuratSelect');
     const sertifikatFields = document.getElementById('sertifikatFields');
-    const lastCertificateNumber = document.getElementById('lastCertificateNumber');
-    const newCertificateNumber = document.getElementById('newCertificateNumber');
+    const jumlahSertifikatInput = document.getElementById('jumlahSertifikatInput');
+    const previewKodeOtomatis = document.getElementById('previewKodeOtomatis');
+    const previewRangeText = document.getElementById('previewRangeText');
     const kodeKlasifikasiInput = document.getElementById('kodeKlasifikasiInput');
     const fileInput = document.getElementById('dropzone-file');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
@@ -247,20 +240,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fungsi untuk update nomor sertifikat baru
-    function updateCertificateNumber() {
-        if (lastCertificateNumber.value && lastCertificateNumber.value !== 'Belum ada sertifikat') {
-            // Ekstrak angka dari nomor terakhir dan tambahkan 1
-            const lastNum = lastCertificateNumber.value.match(/\d+/);
-            if (lastNum) {
-                const nextNum = parseInt(lastNum[0]) + 1;
-                const paddedNum = String(nextNum).padStart(3, '0'); // Format 001, 002, dst
-                newCertificateNumber.value = `SERTIFIKAT-${paddedNum}`;
-            }
+    // Fungsi untuk update preview range sertifikat
+    function updateCertificatePreview() {
+        const count = parseInt(jumlahSertifikatInput.value) || 0;
+        
+        if (count > 0) {
+            // Start from 1 as requested
+            previewKodeOtomatis.value = `SERTIFIKAT-{1} s/d SERTIFIKAT-{${count}}`;
+            previewRangeText.textContent = `Total ${count} sertifikat akan dibuat.`;
         } else {
-            // Jika belum ada sertifikat, mulai dari 001
-            newCertificateNumber.value = 'SERTIFIKAT-001';
+            previewKodeOtomatis.value = 'SERTIFIKAT-...';
+            previewRangeText.textContent = 'Masukkan jumlah untuk melihat range.';
         }
+    }
+
+    // Event listener jumlah sertifikat
+    if (jumlahSertifikatInput) {
+        jumlahSertifikatInput.addEventListener('input', updateCertificatePreview);
     }
 
     // Event listener untuk perubahan jenis surat
@@ -277,26 +273,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Tampilkan/sembunyikan kolom sertifikat
         if (selectedValue.includes('sertifikat')) {
             sertifikatFields.classList.remove('hidden');
-            updateCertificateNumber();
+            updateCertificatePreview();
         } else {
             sertifikatFields.classList.add('hidden');
-            newCertificateNumber.value = '';
         }
     });
 
-    // Inisialisasi saat halaman dimuat (jika ada nilai sebelumnya)
+    // Inisialisasi saat halaman dimuat
     if (jenisSuratSelect.value) {
          const selectedOption = jenisSuratSelect.options[jenisSuratSelect.selectedIndex];
          const kodeKlasifikasi = selectedOption.getAttribute('data-kode');
 
-         // Hanya isi otomatis jika input kode masih kosong (hindari override old input)
          if (kodeKlasifikasi && !kodeKlasifikasiInput.value) {
             kodeKlasifikasiInput.value = kodeKlasifikasi;
          }
 
         if (jenisSuratSelect.value.toLowerCase().includes('sertifikat')) {
             sertifikatFields.classList.remove('hidden');
-            updateCertificateNumber();
+            updateCertificatePreview();
         }
     }
 });

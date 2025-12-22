@@ -89,6 +89,117 @@
                     </div>
                 </div>
             </div>
+        @elseif(auth()->user()->role === 'pimpinan')
+            <!-- Statistik & Laporan Pimpinan -->
+            <div class="mb-10 space-y-8">
+                
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center gap-6">
+                        <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-2xl">
+                             <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total SK Bulan Ini</p>
+                            <h3 class="text-3xl font-bold text-gray-800">{{ $skBulan ?? 0 }}</h3>
+                            <p class="text-xs text-blue-600 mt-1">Periode {{ now()->translatedFormat('F Y') }}</p>
+                        </div>
+                     </div>
+                     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center gap-6">
+                        <div class="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-2xl">
+                             <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total SK Tahun Ini</p>
+                            <h3 class="text-3xl font-bold text-gray-800">{{ $skTahun ?? 0 }}</h3>
+                            <p class="text-xs text-indigo-600 mt-1">Periode Tahun {{ now()->year }}</p>
+                        </div>
+                     </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Laporan Tahunan (5 Tahun) Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-blue-500"></i> Statistik Tahunan (5 Thn Terakhir)
+                            </h3>
+                        </div>
+                        <div class="p-0 overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-5 py-3">Tahun</th>
+                                        <th class="px-5 py-3 text-center">Jumlah SK</th>
+                                        <th class="px-5 py-3 text-right">Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse($laporan5Tahun as $l5t)
+                                    <tr class="hover:bg-gray-50/50">
+                                        <td class="px-5 py-3 font-bold text-gray-700">{{ $l5t->tahun }}</td>
+                                        <td class="px-5 py-3 text-center font-semibold text-gray-800">{{ $l5t->total }}</td>
+                                        <td class="px-5 py-3 text-right">
+                                            <div class="w-24 h-2 bg-blue-100 rounded-full ml-auto overflow-hidden">
+                                                {{-- Simulasi visualisasi bar sederhana --}}
+                                                <div class="h-full bg-blue-500 rounded-full" style="width: {{ $totalSK > 0 ? ($l5t->total / $totalSK * 100) : 0 }}%"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="px-5 py-4 text-center text-gray-400">Belum ada data history.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Laporan Bulanan (Tahun Ini) Table -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-indigo-500"></i> Statistik Bulanan ({{ now()->year }})
+                            </h3>
+                        </div>
+                         <div class="p-0 overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-5 py-3">Bulan</th>
+                                        <th class="px-5 py-3 text-center">Jumlah SK</th>
+                                        <th class="px-5 py-3 text-right">Persentase</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse($laporanBulananTahunIni as $lb)
+                                    @php 
+                                        $percent = $skTahun > 0 ? round(($lb->total / $skTahun) * 100, 1) : 0;
+                                    @endphp
+                                    <tr class="hover:bg-gray-50/50">
+                                        <td class="px-5 py-3 font-medium">{{ \Carbon\Carbon::createFromDate(null, $lb->bulan, 1)->translatedFormat('F') }}</td>
+                                        <td class="px-5 py-3 text-center font-bold text-gray-800">{{ $lb->total }}</td>
+                                        <td class="px-5 py-3 text-right">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <span class="text-xs text-gray-500">{{ $percent }}%</span>
+                                                <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div class="h-full bg-indigo-500 rounded-full" style="width: {{ $percent }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="px-5 py-4 text-center text-gray-400">Belum ada data tahun ini.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         @else
             <!-- Statistik User Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

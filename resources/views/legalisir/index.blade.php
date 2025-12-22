@@ -90,7 +90,7 @@
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-center">
-                                @if(auth()->user()->role === 'admin' && $req->status === 'pending')
+                                @if(auth()->user()->role === 'pimpinan' && $req->status === 'pending')
                                 <div class="flex justify-center gap-2">
                                     <!-- Tombol Approve -->
                                     <button onclick="openActionModal('{{ $req->id }}', 'approve')" 
