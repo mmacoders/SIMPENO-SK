@@ -16,10 +16,10 @@ use App\Http\Controllers\LegalisirController;
 Route::middleware(['auth'])->group(function () {
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity_logs.index');
     
-    // Legalisir Routes
-    Route::get('/legalisir', [LegalisirController::class, 'index'])->name('legalisir.index');
-    Route::post('/legalisir/store', [LegalisirController::class, 'store'])->name('legalisir.store');
-    Route::patch('/legalisir/{id}/status', [LegalisirController::class, 'updateStatus'])->name('legalisir.update_status');
+    // Legalisir Routes (Disabled)
+    // Route::get('/legalisir', [LegalisirController::class, 'index'])->name('legalisir.index');
+    // Route::post('/legalisir/store', [LegalisirController::class, 'store'])->name('legalisir.store');
+    // Route::patch('/legalisir/{id}/status', [LegalisirController::class, 'updateStatus'])->name('legalisir.update_status');
 });
 
 // 🔹 Download file SK - dengan middleware auth
@@ -37,6 +37,7 @@ Route::prefix('/sk')->middleware('auth')->group(function () {
     Route::get('/create', [SKController::class, 'create'])->name('sk.create');
     Route::post('/store', [SKController::class, 'store'])->name('sk.store');
     Route::get('/arsip', [SKController::class, 'archive'])->name('sk.archive');
+    Route::get('/sertifikat', [SKController::class, 'sertifikatIndex'])->name('sertifikat.index');
     Route::post('/update', [SKController::class, 'update'])->name('sk.update');
     Route::delete('/destroy/{id}', [SKController::class, 'destroy'])->name('sk.destroy');
 });

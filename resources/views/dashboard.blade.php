@@ -33,10 +33,6 @@
                     @endif
                 </p>
             </div>
-            <div class="hidden md:block text-right">
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Waktu Server</span>
-                <p class="text-lg font-mono text-gray-700 font-bold">{{ now()->translatedFormat('d F Y, H:i') }}</p>
-            </div>
         </div>
 
         @if(auth()->user()->role === 'admin')
@@ -64,19 +60,7 @@
                     </div>
                 </div>
                 
-                 <!-- Permohonan Legalisir Pending -->
-                 @php 
-                    $pendingLegalisir = \App\Models\LegalisirRequest::where('status', 'pending')->count();
-                 @endphp
-                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group">
-                     <div class="absolute top-0 right-0 p-4 opacity-10">
-                         <i class="fa-solid fa-file-signature text-6xl text-orange-600"></i>
-                    </div>
-                    <div class="relative z-10">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Legalisir Pending</p>
-                        <h3 class="text-3xl font-bold text-gray-800 {{ $pendingLegalisir > 0 ? 'text-orange-600' : '' }}">{{ $pendingLegalisir }}</h3>
-                    </div>
-                </div>
+
 
                 <!-- Aktivitas Hari Ini -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group">
@@ -237,22 +221,7 @@
                    </div>
                </div>
                
-               <!-- Card 3: Legalisir Pending -->
-               <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 relative overflow-hidden group">
-                    <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <i class="fa-solid fa-file-signature text-8xl text-purple-600 transform group-hover:scale-110 transition-transform"></i>
-                    </div>
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-3 mb-2">
-                           <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                               <i class="fa-solid fa-clock text-lg"></i>
-                           </div>
-                           <span class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Legalisir Pending</span>
-                       </div>
-                       <h3 class="text-4xl font-bold text-gray-800 mb-1">{{ \App\Models\LegalisirRequest::where('user_id', auth()->id())->where('status', 'pending')->count() }}</h3>
-                       <p class="text-sm text-gray-400">Menunggu persetujuan admin</p>
-                   </div>
-               </div>
+
             </div>
         @endif
         
@@ -348,8 +317,7 @@
                             
                             <td class="py-4 px-6">
                                 <div class="flex flex-col">
-                                    <span class="font-bold text-gray-800 text-sm">{{ $sk->nomor_sk }}</span>
-                                    <span class="text-xs text-gray-500 font-mono mt-0.5 bg-gray-100 px-1.5 py-0.5 rounded w-fit">{{ $sk->kode_klasifikasi }}</span>
+                                    <span class="font-bold text-gray-800 text-sm">{{ $sk->nomor_sk }}/{{ $sk->kode_klasifikasi }}</span>
                                 </div>
                             </td>
                             <td class="py-4 px-6">
@@ -442,7 +410,6 @@
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="Kepegawaian">SK</option>
                     <option value="Keuangan">BAST</option>
-                    <option value="Akademik">Legalisir</option>
                     <option value="Umum">Sertifikat</option>
                 </select>
             </div>

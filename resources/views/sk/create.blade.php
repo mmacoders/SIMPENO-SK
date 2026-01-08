@@ -85,7 +85,7 @@
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fa-solid fa-layer-group text-gray-400"></i>
                                         </div>
-                                        <select name="jenis_surat" id="jenisSuratSelect"
+                                    <select name="jenis_surat" id="jenisSuratSelect"
                                             class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                             required>
                                             <option value="">-- Pilih Jenis Surat --</option>
@@ -95,7 +95,17 @@
                                                 {{ $kat->jenis_surat }}
                                             </option>
                                             @endforeach
+                                            <option value="new_type_input" class="font-bold text-blue-600 bg-blue-50">+ Input Jenis Surat Baru</option>
                                         </select>
+                                    </div>
+                                    
+                                    {{-- Field Input Jenis Surat Baru (Hidden by default) --}}
+                                    <div id="newJenisSuratField" class="mt-3 hidden animate-fade-in-down">
+                                        <label class="block text-sm font-medium text-blue-700 mb-1">Nama Jenis Surat Baru</label>
+                                        <input type="text" name="jenis_surat_baru" id="jenisSuratBaruInput"
+                                            class="block w-full border-blue-300 bg-blue-50 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                            placeholder="Masukkan nama jenis surat baru..." value="{{ old('jenis_surat_baru') }}">
+                                        <p class="text-xs text-blue-600 mt-1">Jenis surat ini akan otomatis disimpan ke sistem.</p>
                                     </div>
                                 </div>
 
@@ -178,16 +188,16 @@
 
                     {{-- Section 4: Upload File --}}
                     <div class="p-6 md:p-8 bg-gray-50/50">
-                        <label class="block text-sm font-medium text-gray-700 mb-4">Upload Dokumen (Opsional)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-4">Upload Dokumen <span class="text-red-500">*</span></label>
                         
                         <div class="flex items-center justify-center w-full">
                             <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors group">
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-3 group-hover:text-blue-500 transition-colors"></i>
                                     <p class="mb-1 text-sm text-gray-500"><span class="font-semibold text-blue-600">Klik untuk upload</span> atau drag and drop</p>
-                                    <p class="text-xs text-gray-500">PDF (Maks. 2MB)</p>
+                                    <p class="text-xs text-red-500 font-medium">PDF (Maks. 2MB)</p>
                                 </div>
-                                <input id="dropzone-file" name="file_pdf" type="file" accept="application/pdf" class="hidden" />
+                                <input id="dropzone-file" name="file_pdf" type="file" accept="application/pdf" class="hidden" required />
                             </label>
                         </div>
                         <div id="fileNameDisplay" class="mt-2 text-sm text-gray-600 hidden flex items-center">
@@ -213,7 +223,8 @@
             </form>
         </div>
     </main>
-</div>
+
+
 
 {{-- JavaScript untuk menangani kolom dinamis --}}
 <script>
@@ -228,11 +239,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileNameDisplay = document.getElementById('fileNameDisplay');
     const fileNameText = document.getElementById('fileNameText');
 
-    // File Input Name Display
+
+
+    // File Input Name Display & Validation
     if(fileInput) {
         fileInput.addEventListener('change', function(e) {
             if(this.files && this.files[0]) {
-                fileNameText.textContent = this.files[0].name;
+                const file = this.files[0];
+                
+                // Cek ukuran file (max 2MB)
+                if(file.size > 2 * 1024 * 1024) {
+                    alert('Ukuran file melebihi batas 2MB. Silakan upload file yang lebih kecil.');
+                    this.value = ''; // Reset input
+                    fileNameDisplay.classList.add('hidden');
+                    return;
+                }
+                
+                fileNameText.textContent = file.name;
                 fileNameDisplay.classList.remove('hidden');
             } else {
                 fileNameDisplay.classList.add('hidden');
@@ -262,20 +285,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listener untuk perubahan jenis surat
     jenisSuratSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
-        const selectedValue = this.value.toLowerCase();
+        const selectedValue = this.value; // Jangan di-lowercase dulu utk cek exact value
         const kodeKlasifikasi = selectedOption.getAttribute('data-kode');
+        const newJenisSuratField = document.getElementById('newJenisSuratField');
+        const jenisSuratBaruInput = document.getElementById('jenisSuratBaruInput');
 
-        // Update Kode Klasifikasi jika ada
-        if (kodeKlasifikasi) {
-            kodeKlasifikasiInput.value = kodeKlasifikasi;
-        }
-
-        // Tampilkan/sembunyikan kolom sertifikat
-        if (selectedValue.includes('sertifikat')) {
-            sertifikatFields.classList.remove('hidden');
-            updateCertificatePreview();
-        } else {
+        // Reset state
+        if (selectedValue === 'new_type_input') {
+            newJenisSuratField.classList.remove('hidden');
+            jenisSuratBaruInput.required = true;
+            jenisSuratBaruInput.focus();
+            
+            // Clear kode klasifikasi agar user input sendiri
+            kodeKlasifikasiInput.value = '';
+            kodeKlasifikasiInput.placeholder = 'Masukkan kode klasifikasi baru...';
+            
+            // Hide sertifikat fields sementara (logic sertifikat hanya untuk yg sdh ada keywordnya)
+            // Kecuali user ngetik "Sertifikat xxx" nanti? 
+            // Untuk simplifikasi, anggap input baru belum trigger fitur sertifikat kecuali manual logic, 
+            // tapi kita hide dulu biar clear.
             sertifikatFields.classList.add('hidden');
+        } else {
+            newJenisSuratField.classList.add('hidden');
+            jenisSuratBaruInput.required = false;
+            
+            // Logic normal
+            if (kodeKlasifikasi) {
+                kodeKlasifikasiInput.value = kodeKlasifikasi;
+            }
+            kodeKlasifikasiInput.placeholder = 'Contoh: B.001';
+
+            // Tampilkan/sembunyikan kolom sertifikat
+            if (selectedValue.toLowerCase().includes('sertifikat')) {
+                sertifikatFields.classList.remove('hidden');
+                updateCertificatePreview();
+            } else {
+                sertifikatFields.classList.add('hidden');
+            }
         }
     });
 

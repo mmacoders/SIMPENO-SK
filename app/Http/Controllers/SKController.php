@@ -160,21 +160,51 @@ class SKController extends Controller
             'perihal'             => 'nullable|string',
             // 'nomor_sertifikat'    => 'nullable|string|max:100', // Unique validation removed because of range
             'jumlah_penerima'     => 'nullable|integer|min:1',
-            'file_pdf'            => 'nullable|file|mimes:pdf|max:2048',
+            'file_pdf'            => 'required|file|mimes:pdf|max:2048',
             'jumlah_sertifikat'   => 'nullable|integer|min:1', // Input baru untuk batch sertifikat
+        ], [
+            'file_pdf.max' => 'Ukuran file PDF tidak boleh lebih dari 2MB.',
+            'file_pdf.mimes' => 'File harus berupa PDF.',
+            'file_pdf.uploaded' => 'Gagal mengupload file. Kemungkinan ukuran file terlalu besar (Maks 2MB).',
         ]);
+
+        // Validasi input tambahan jika jenis surat baru
+        if ($request->jenis_surat === 'new_type_input') {
+            $request->validate([
+                'jenis_surat_baru' => 'required|string|max:100|unique:kategori_sks,jenis_surat',
+            ], [
+                'jenis_surat_baru.unique' => 'Jenis surat ini sudah ada. Silakan pilih dari daftar.',
+            ]);
+        }
 
         // Generate Nomor SK berdasarkan Tahun Tanggal Ditetapkan dan Kantor User
         $year = date('Y', strtotime($validated['tanggal_ditetapkan']));
         $nomorSurat = $this->generateNextNomorSK($year);
 
-        // Cari kategori berdasarkan jenis_surat yang dipilih
-        $kategori = KategoriSk::where('jenis_surat', $validated['jenis_surat'])->first();
-        
-        if (!$kategori) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Jenis surat tidak valid. Silakan pilih dari daftar yang tersedia.');
+        $finalJenisSurat = $validated['jenis_surat'];
+        $kategoriId = null;
+
+        if ($validated['jenis_surat'] === 'new_type_input') {
+            $finalJenisSurat = $request->jenis_surat_baru;
+            
+            // Create New Category on the fly
+            // Kita simpan ke master data agar next time muncul
+            $newKategori = KategoriSk::create([
+                'jenis_surat' => $finalJenisSurat,
+                'kode_klasifikasi' => $validated['kode_klasifikasi'] // Defaultkan ke inputan pertama
+            ]);
+            
+            $kategoriId = $newKategori->id;
+        } else {
+            // Cari kategori berdasarkan jenis_surat yang dipilih
+            $kategori = KategoriSk::where('jenis_surat', $validated['jenis_surat'])->first();
+            
+            if (!$kategori) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Jenis surat tidak valid. Silakan pilih dari daftar yang tersedia.');
+            }
+            $kategoriId = $kategori->id;
         }
 
         // Upload PDF (opsional)
@@ -185,14 +215,10 @@ class SKController extends Controller
 
         // Otomatis generate nomor sertifikat RANGE jika jenis surat adalah sertifikat
         $nomorSertifikat = null;
-        if (str_contains(strtolower($validated['jenis_surat']), 'sertifikat')) {
+        if (str_contains(strtolower($finalJenisSurat), 'sertifikat')) {
             $jumlahBatch = $request->input('jumlah_sertifikat', 1);
             
             // Cari nomor sertifikat terakhir (numeric only parsing)
-            // Asumsi format di DB sekarang bisa "SERTIFIKAT-001" atau "SERTIFIKAT-001 s/d SERTIFIKAT-005"
-            // Kita harus cari angka terakhir yang terpakai.
-            // Cara basic: ambil last record, parse max number.
-            // (Untuk presisi tinggi perlu query khusus, tapi ini pendekatan sederhana)
             $lastCertificate = SK::where('jenis_surat', 'like', '%sertifikat%')
                 ->whereNotNull('nomor_sertifikat')
                 ->latest()
@@ -215,16 +241,7 @@ class SKController extends Controller
             }
             
             // Generate Range
-            $startNum = $lastNum + 1; // Sesuai request user: 0 - n. Tapi 0 biasanya start? 
-            // Kalau user minta "dimulai dari 0", apakah maksudnya reset? 
-            // Biasanya sistem lanjut. Mari asumsi lanjut.
-            // Jika user minta start dari 0 literally, itu aneh untuk sistem arsip berkelanjutan.
-            // Saya interpretasikan "0 - n" sebagai "range dari Start sampai End" (relatif).
-            
-            // Wait, user request said: "jumlah sertifikat dimulai dari 0 - {jumlah_sertifikat}".
-            // Mungkin maksudnya: Index 0 to N.
-            // Mari kita buat range Start s/d End.
-            
+            $startNum = $lastNum + 1;
             $endNum = $lastNum + $jumlahBatch;
             
             if ($jumlahBatch > 1) {
@@ -235,7 +252,6 @@ class SKController extends Controller
             
             // Override jumlah penerima jika kosong
             if (empty($validated['jumlah_penerima'])) {
-               // Tambahin ke data request atau variable local
                $validated['jumlah_penerima'] = $jumlahBatch;
             }
         }
@@ -244,14 +260,14 @@ class SKController extends Controller
         $sk = SK::create([
             'nomor_sk'              => $nomorSurat,
             'nomor_sertifikat'      => $nomorSertifikat,
-            'jenis_surat'           => $validated['jenis_surat'],
+            'jenis_surat'           => $finalJenisSurat, // Gunakan variabel final
             'tanggal_ditetapkan'    => $validated['tanggal_ditetapkan'],
             'kode_klasifikasi'      => $validated['kode_klasifikasi'],
             'pejabat_penandatangan' => $validated['pejabat_penandatangan'],
             'perihal'               => $validated['perihal'] ?? null,
             'file_pdf'              => $filePath,
             'user_id'               => $user->id,
-            'kategori_sk_id'        => $kategori->id,
+            'kategori_sk_id'        => $kategoriId, // Gunakan variabel final
             'jumlah_penerima'       => $validated['jumlah_penerima'] ?? null,
         ]);
 
@@ -280,6 +296,23 @@ class SKController extends Controller
         $kategoriSK = KategoriSk::orderBy('jenis_surat')->get();
 
         return view('archive.arsip', compact('dataSK', 'totalSK', 'skBulan', 'skTahun', 'perihal', 'kategoriSK'));
+    }
+
+    /**
+     * Display the certificate specific archive page.
+     */
+    public function sertifikatIndex()
+    {
+        // Filter hanya yang mengandung kata 'sertifikat' di jenis_surat
+        $dataSertifikat = SK::with(['user'])
+            ->where('jenis_surat', 'like', '%sertifikat%')
+            ->latest()
+            ->get();
+            
+        $totalSertifikat = $dataSertifikat->count();
+        $totalPenerima = $dataSertifikat->sum('jumlah_penerima');
+        
+        return view('sertifikat.index', compact('dataSertifikat', 'totalSertifikat', 'totalPenerima'));
     }
 
     /**
@@ -321,13 +354,23 @@ class SKController extends Controller
         // Validasi dengan nama field dari form
         $validated = $request->validate([
             'id'                  => 'required|exists:sk,id',
-            'nomor_sk'            => 'required|string|max:50|unique:sk,nomor_sk,' . $request->id,
+            'nomor_sk'            => [
+                'required', 
+                'string', 
+                'max:50',
+                // Validasi unik per tahun (menggantikan unique constraint global)
+                \Illuminate\Validation\Rule::unique('sk')
+                    ->where(function ($query) use ($request) {
+                        return $query->whereYear('tanggal_ditetapkan', date('Y', strtotime($request->tanggal_ditetapkan)));
+                    })
+                    ->ignore($request->id)
+            ],
             'kode_klasifikasi'    => 'required|string|max:50',
             'jenis_surat'         => 'required|string|max:100',
             'tanggal_ditetapkan'  => 'required|date',
             'pejabat_penandatangan' => 'required|string|max:255',
             'perihal'             => 'nullable|string',
-            'nomor_sertifikat'    => 'nullable|string|max:100|unique:sk,nomor_sertifikat,' . $request->id,
+            'nomor_sertifikat'    => 'nullable|string|max:100', // Unik dihapus karena range
             'jumlah_penerima'     => 'nullable|integer|min:1',
             'file_pdf'            => 'nullable|mimes:pdf|max:2048',
         ]);

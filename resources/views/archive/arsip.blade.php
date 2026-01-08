@@ -170,12 +170,7 @@
                             <span>Lihat</span>
                         </button>
                         
-                        <!-- Tombol Legalisir -->
-                        <button type="button" data-id="{{ $sk->id }}" data-nomor="{{ $sk->nomor_sk }}"
-                            class="btn-legalisir flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
-                            <i class="fa-solid fa-certificate"></i>
-                            <span>Legalisir</span>
-                        </button>
+
                         @else
                         <button type="button" disabled
                             class="flex items-center justify-center gap-2 bg-gray-100 text-gray-400 px-4 py-2.5 rounded-lg font-medium text-sm cursor-not-allowed">
@@ -229,66 +224,7 @@
             <p class="text-gray-400 text-sm mt-1">Coba ubah kata kunci atau filter pencarian Anda</p>
         </div>
 
-        <!-- Modal Legalisir -->
-        <div id="legalisirModal" class="fixed inset-0 z-[9999] hidden overflow-y-auto">
-            <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
-            <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all">
-                    <div class="px-6 pt-6 pb-4 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-xl font-bold text-gray-800">Ajukan Legalisir Online</h2>
-                            <button type="button" id="btnCloseLegalisirModal"
-                                class="text-gray-400 hover:text-gray-600 text-xl rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors duration-200">
-                                <i class="fa-solid fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="px-6 py-4">
-                        <form id="legalisirForm" method="POST" action="{{ route('legalisir.store') }}">
-                            @csrf
-                            <input type="hidden" name="sk_id" id="legalisir_sk_id">
-
-                            <div class="mb-4 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100">
-                                <p class="font-semibold">SK: <span id="legalisir_nomor_sk"></span></p>
-                                <p class="text-xs mt-1">Hasil legalisir akan dikirimkan melalui WhatsApp.</p>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Keperluan Legalisir</label>
-                                    <input type="text" name="keperluan" required placeholder="Contoh: Pemberkasan CPNS"
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-colors duration-200">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor WhatsApp</label>
-                                    <div class="relative">
-                                        <span class="absolute left-3 top-2.5 text-gray-400">
-                                            <i class="fa-brands fa-whatsapp text-lg"></i>
-                                        </span>
-                                        <input type="text" name="no_wa" required placeholder="08xxxxxxxxxx"
-                                            class="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-colors duration-200">
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">Pastikan nomor aktif dan terhubung WhatsApp.</p>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-end gap-3 mt-6">
-                                <button type="button" id="btnCancelLegalisir"
-                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors duration-200">
-                                    Batal
-                                </button>
-                                <button type="submit"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-all duration-300 shadow-lg shadow-green-200">
-                                    <i class="fa-solid fa-paper-plane mr-2"></i>Kirim Pengajuan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Modal Edit -->
         <div id="editModal" class="fixed inset-0 z-[9999] hidden overflow-y-auto">
@@ -693,35 +629,7 @@ $(document).on('click', '.btn-delete', function() {
     $('#deleteModal .relative').addClass('modal-enter');
 });
 
-// === LOGIC LEGALISIR ===
-$(document).on('click', '.btn-legalisir', function() {
-    const id = $(this).data('id');
-    const nomor = $(this).data('nomor');
 
-    $('#legalisir_sk_id').val(id);
-    $('#legalisir_nomor_sk').text(nomor);
-
-    // Tampilkan modal
-    $('#legalisirModal').removeClass('hidden');
-    preventBackgroundScroll(true);
-    $('#legalisirModal .relative').addClass('modal-enter');
-});
-
-function closeLegalisirModal() {
-    $('#legalisirModal').addClass('hidden');
-    preventBackgroundScroll(false);
-}
-
-$('#btnCloseLegalisirModal, #btnCancelLegalisir').click(closeLegalisirModal);
-$('#legalisirModal > .fixed.inset-0').click(closeLegalisirModal);
-$('#legalisirModal .relative').click(function(e) { e.stopPropagation(); });
-
-// Handle form submission loading state
-$('#legalisirForm').on('submit', function() {
-    const submitBtn = $(this).find('button[type="submit"]');
-    submitBtn.prop('disabled', true);
-    submitBtn.html('<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengirim...');
-});
 // ======================
 
 // Close modal hapus

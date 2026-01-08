@@ -27,13 +27,14 @@
             <span class="font-semibold">Arsip SK</span>
         </a>
 
-        {{-- Legalisir Online (User View) --}}
-        <a href="{{ route('legalisir.index') }}" class="flex items-center p-3 rounded-lg
-            {{ request()->routeIs('legalisir.*') ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-l-4 border-blue-300 shadow-md' : 'text-blue-100 hover:bg-gradient-to-r hover:from-blue-600/70 hover:to-purple-600/70 hover:text-white' }}
+        {{-- Arsip Sertifikat (User Only) --}}
+        <a href="{{ route('sertifikat.index') }}" class="flex items-center p-3 rounded-lg
+            {{ request()->routeIs('sertifikat.index') ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-l-4 border-blue-300 shadow-md' : 'text-blue-100 hover:bg-gradient-to-r hover:from-blue-600/70 hover:to-purple-600/70 hover:text-white' }}
             transition-all duration-200 group">
-            <i class="fa-solid fa-file-signature mr-3"></i>
-            <span class="font-medium">Legalisir Saya</span>
+            <i class="fa-solid fa-certificate mr-3"></i>
+            <span class="font-medium">Arsip Sertifikat</span>
         </a>
+
         @endif
 
         {{-- Admin Menu --}}
@@ -64,19 +65,6 @@
             </a>
         @endif
 
-        {{-- Pimpinan Menu --}}
-        @if(auth()->user()->role === 'pimpinan')
-            <div class="pt-4 pb-2">
-                <p class="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Pimpinan</p>
-            </div>
 
-            {{-- Permohonan Legalisir (Pimpinan View - Approval) --}}
-            <a href="{{ route('legalisir.index') }}" class="flex items-center p-3 rounded-lg
-                {{ request()->routeIs('legalisir.*') ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-l-4 border-blue-300 shadow-md' : 'text-blue-100 hover:bg-gradient-to-r hover:from-blue-600/70 hover:to-purple-600/70 hover:text-white' }}
-                transition-all duration-200 group">
-                <i class="fa-solid fa-file-signature mr-3"></i>
-                <span class="font-medium">Permohonan Legalisir</span>
-            </a>
-        @endif
     </nav>
 </aside>
