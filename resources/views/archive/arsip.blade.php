@@ -163,20 +163,25 @@
 
                     <!-- Action Buttons -->
                     <div class="flex lg:flex-col gap-2 lg:min-w-[140px]">
-                        @if(!empty($sk->file_pdf))
-                        <button type="button" data-id="{{ $sk->id }}"
-                            class="btn-view flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
-                            <i class="fa-solid fa-eye"></i>
-                            <span>Lihat</span>
-                        </button>
-                        
-
+                        {{-- Logika Tombol Lihat --}}
+                        @if(str_contains(strtolower($sk->jenis_surat), 'sertifikat'))
+                             <a href="{{ route('sertifikat.index') }}" 
+                                class="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
+                                <i class="fa-solid fa-list-check"></i>
+                                <span>Detail</span>
+                            </a>
+                        @elseif(!empty($sk->file_pdf))
+                            <button type="button" data-id="{{ $sk->id }}"
+                                class="btn-view flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
+                                <i class="fa-solid fa-eye"></i>
+                                <span>Lihat</span>
+                            </button>
                         @else
-                        <button type="button" disabled
-                            class="flex items-center justify-center gap-2 bg-gray-100 text-gray-400 px-4 py-2.5 rounded-lg font-medium text-sm cursor-not-allowed">
-                            <i class="fa-solid fa-eye-slash"></i>
-                            <span>Tidak Ada</span>
-                        </button>
+                            <button type="button" disabled
+                                class="flex items-center justify-center gap-2 bg-gray-100 text-gray-400 px-4 py-2.5 rounded-lg font-medium text-sm cursor-not-allowed">
+                                <i class="fa-solid fa-eye-slash"></i>
+                                <span>Tidak Ada</span>
+                            </button>
                         @endif
 
                         @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->id() === $sk->user_id))
@@ -307,7 +312,7 @@
                                 </div>
 
                                 <!-- FILE PDF -->
-                                <div>
+                                <div id="edit_file_container">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Upload File PDF
                                         (Opsional)</label>
                                     <input type="file" name="file_pdf" accept="application/pdf" id="edit_file_pdf"
@@ -553,12 +558,21 @@ $(document).on('click', '.btn-edit', function() {
 
     // Isi form edit dengan ID yang BENAR
     $('#edit_id').val(id);
-    $('#edit_nomor_sk').val(nomor_sk); // BUKAN #edit_judul
-    $('#edit_kode_klasifikasi').val(kode_klasifikasi); // BUKAN #edit_kode
-    $('#edit_jenis_surat').val(jenis_surat); // BUKAN #edit_kategori
-    $('#edit_tanggal_ditetapkan').val(tanggal_ditetapkan); // BUKAN #edit_tanggal
-    $('#edit_pejabat_penandatangan').val(pejabat_penandatangan); // PASTIKAN ID BENAR
-    $('#edit_perihal').val(perihal); // BUKAN #edit_keterangan
+    $('#edit_nomor_sk').val(nomor_sk);
+    $('#edit_kode_klasifikasi').val(kode_klasifikasi);
+    $('#edit_jenis_surat').val(jenis_surat);
+    $('#edit_tanggal_ditetapkan').val(tanggal_ditetapkan);
+    $('#edit_pejabat_penandatangan').val(pejabat_penandatangan);
+    $('#edit_perihal').val(perihal);
+
+    // LOGIC HIDE UPLOAD UTK SERTIFIKAT
+    if (jenis_surat.toLowerCase().includes('sertifikat')) {
+        $('#edit_file_container').hide();
+    } else {
+        $('#edit_file_container').show();
+        // Reset value input file jika perlu (opsional, browser security prevent overriding value to empty string cleanly besides reset form)
+        // Tapi tampilan current file dll biarkan saja logic backend yg handle
+    }
 
     // Tampilkan modal dan prevent scroll
     $('#editModal').removeClass('hidden');
