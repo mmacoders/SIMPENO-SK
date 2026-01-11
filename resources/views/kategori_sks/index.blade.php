@@ -41,7 +41,7 @@
                             <th class="py-4 px-6 font-semibold w-20 text-center">#</th>
                             <th class="py-4 px-6 font-semibold">Jenis Surat</th>
                             <th class="py-4 px-6 font-semibold">Kode Klasifikasi</th>
-                            <th class="py-4 px-6 font-semibold text-center w-40">Aksi</th>
+                            <th class="py-4 px-6 font-semibold text-center min-w-[140px]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

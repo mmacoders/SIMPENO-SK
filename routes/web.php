@@ -9,6 +9,7 @@ use App\Http\Controllers\KategoriSKController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\LegalisirController;
+use App\Http\Controllers\KlasifikasiArsipController;
 
 // ... after existing routes
 
@@ -18,7 +19,26 @@ Route::middleware(['auth'])->group(function () {
     
     // Legalisir Routes (Disabled)
     // Route::get('/legalisir', [LegalisirController::class, 'index'])->name('legalisir.index');
-    // Route::post('/legalisir/store', [LegalisirController::class, 'store'])->name('legalisir.store');
+    // Manajemen Klasifikasi (Admin)
+    // Manajemen Klasifikasi (Admin)
+    Route::group(['prefix' => 'admin', 'middleware' => function ($request, $next) {
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            return $next($request);
+        }
+        return redirect('/'); // or abort(403)
+    }], function () {
+        Route::get('/klasifikasi', [KlasifikasiArsipController::class, 'index'])->name('klasifikasi.index');
+        Route::post('/klasifikasi', [KlasifikasiArsipController::class, 'store'])->name('klasifikasi.store');
+        Route::put('/klasifikasi/{id}', [KlasifikasiArsipController::class, 'update'])->name('klasifikasi.update');
+        Route::delete('/klasifikasi/{id}', [KlasifikasiArsipController::class, 'destroy'])->name('klasifikasi.destroy');
+
+        // Admin Resources
+        Route::resource('kategori-sks', KategoriSKController::class);
+        Route::resource('users', UserManagementController::class);
+    });
+
+    // Public search for Create SK form
+    Route::get('/klasifikasi/search', [KlasifikasiArsipController::class, 'search'])->name('klasifikasi.search');
     // Route::patch('/legalisir/{id}/status', [LegalisirController::class, 'updateStatus'])->name('legalisir.update_status');
 });
 
@@ -37,7 +57,6 @@ Route::prefix('/sk')->middleware('auth')->group(function () {
     Route::get('/create', [SKController::class, 'create'])->name('sk.create');
     Route::post('/store', [SKController::class, 'store'])->name('sk.store');
     Route::get('/arsip', [SKController::class, 'archive'])->name('sk.archive');
-    Route::get('/sertifikat', [SKController::class, 'sertifikatIndex'])->name('sertifikat.index');
     Route::post('/update', [SKController::class, 'update'])->name('sk.update');
     Route::delete('/destroy/{id}', [SKController::class, 'destroy'])->name('sk.destroy');
 });
@@ -52,8 +71,7 @@ Route::get('/sk/view/{id}', [SKController::class, 'viewPdf'])->name('sk.view');
 Route::post('/sk/delete', [SKController::class, 'delete'])->name('sk.delete');
 
 Route::middleware(['auth'])->group(function () {
-     Route::resource('kategori-sks', KategoriSKController::class);
-    Route::resource('users', UserManagementController::class);
+   // Resources moved to admin group
 });
 
 

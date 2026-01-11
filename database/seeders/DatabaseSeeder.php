@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@instansi.com'],
             [
-                'name' => 'Admin Utama',
+                'name' => 'Administrator',
                 'password' => Hash::make('admin123'),
                 'role' => 'admin'
             ]

@@ -14,9 +14,9 @@ class PimpinanSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => 'pimpinan@ung.ac.id'],
+            ['email' => 'pimpinan@instansi.com'],
             [
-                'name' => 'Pimpinan UNG',
+                'name' => 'Pimpinan Instansi',
                 'password' => Hash::make('pimpinan123'),
                 'role' => 'pimpinan', 
             ]

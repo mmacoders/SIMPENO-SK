@@ -37,11 +37,11 @@
             </div>
             @endif
 
-            <form action="{{ route('sk.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="createSkForm" action="{{ route('sk.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    
+
                     {{-- Section 1: Detail Surat --}}
                     <div class="p-6 md:p-8 border-b border-gray-100">
                         <h2 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
@@ -58,7 +58,7 @@
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fa-solid fa-hashtag text-gray-400"></i>
                                         </div>
-                                        <input type="text"
+                                        <input type="text" id="nomorAgendaInput"
                                             class="pl-10 block w-full bg-gray-50 border-gray-300 rounded-lg text-gray-500 shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"
                                             value="{{ $nextNomor ?? '001' }}" readonly>
                                     </div>
@@ -109,52 +109,46 @@
                                     </div>
                                 </div>
 
-                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Kode Klasifikasi <span class="text-red-500">*</span></label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="fa-solid fa-code text-gray-400"></i>
+                                    <div class="flex rounded-xl shadow-sm">
+                                        <div class="relative flex-grow focus-within:z-10">
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <i class="fa-solid fa-code text-gray-400"></i>
+                                            </div>
+                                            <input type="text" name="kode_klasifikasi" id="kodeKlasifikasiInput"
+                                                class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-xl pl-12 py-3 sm:text-base border-gray-300 transition-all font-medium"
+                                                value="{{ old('kode_klasifikasi') }}" placeholder="Contoh: DL.01" required>
                                         </div>
-                                        <input type="text" name="kode_klasifikasi" id="kodeKlasifikasiInput"
-                                            class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                            value="{{ old('kode_klasifikasi') }}" placeholder="Contoh: B.001" required>
+                                        <button type="button" onclick="openKlasifikasiModal()"
+                                            class="-ml-px relative inline-flex items-center space-x-2 px-6 py-3 border border-gray-300 text-sm font-medium rounded-r-xl text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-inner">
+                                            <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
+                                            <span class="hidden md:inline font-semibold text-gray-600">Cari</span>
+                                        </button>
                                     </div>
+                                    
+                                    {{-- Selected Klasifikasi Display --}}
+                                    <div id="selectedKlasifikasiInfo" class="hidden mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3 animate-fade-in-down">
+                                        <div class="mt-0.5 text-blue-600">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-blue-800 uppercase tracking-wide">Klasifikasi Terpilih</p>
+                                            <p class="text-sm font-medium text-gray-700" id="selectedNamaDisplay">-</p>
+                                            <p class="text-xs text-gray-500" id="selectedUraianDisplay"></p>
+                                        </div>
+                                        <button type="button" id="clearKlasifikasiBtn" class="ml-auto text-gray-400 hover:text-red-500">
+                                            <i class="fa-solid fa-times"></i>
+                                        </button>
+                                    </div>
+
                                     @error('kode_klasifikasi')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                     @enderror
-                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Section 2: Khusus Sertifikat (Dinamis) --}}
-                    <div id="sertifikatFields" class="hidden bg-blue-50/50 border-b border-blue-100 p-6 md:p-8">
-                        <h2 class="text-lg font-semibold text-blue-800 mb-6 flex items-center">
-                            <i class="fa-solid fa-certificate mr-3"></i>
-                            Informasi Sertifikat
-                        </h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Sertifikat Terakhir</label>
-                                <input type="number" name="jumlah_sertifikat" id="jumlahSertifikatInput" min="1"
-                                    class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    placeholder="Masukkan jumlah sertifikat..." value="{{ old('jumlah_sertifikat') }}">
-                                <p class="text-xs text-gray-500 mt-1">Masukkan jumlah sertifikat yang akan dibuat.</p>
-                            </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Kode Otomatis</label>
-                                <input type="text" id="previewKodeOtomatis"
-                                    class="block w-full bg-gray-100 border-gray-300 rounded-lg text-gray-500 shadow-sm sm:text-sm"
-                                    value="SERTIFIKAT-..." readonly>
-                                <p class="text-xs text-blue-600 mt-1" id="previewRangeText">Akan mulai dari 0 - n</p>
-                            </div>
-                            
-                            <!-- Hidden input untuk menyimpan nomor start/last (optional, jika perlu di controller) -->
-                            <input type="hidden" id="lastCertNumDb" value="{{ $lastCertificateNumber ?? 'SERTIFIKAT-000' }}">
-                        </div>
-                    </div>
 
                     {{-- Section 3: Isi & Penanda Tangan --}}
                     <div class="p-6 md:p-8 border-b border-gray-100">
@@ -165,14 +159,14 @@
 
                         <div class="space-y-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pejabat Penandatangan <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pembuat Draft <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <i class="fa-solid fa-user-pen text-gray-400"></i>
                                     </div>
                                     <input type="text" name="pejabat_penandatangan"
                                         class="pl-10 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                        placeholder="Nama atau Jabatan Penandatangan"
+                                        placeholder="Pembuat Draft"
                                         value="{{ old('pejabat_penandatangan') }}" required>
                                 </div>
                             </div>
@@ -214,7 +208,7 @@
                         <a href="{{ route('sk.archive') }}" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all">
                             Batal
                         </a>
-                        <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all shadow-sm flex items-center">
+                        <button type="button" onclick="openConfirmModal()" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all shadow-sm flex items-center">
                             <i class="fa-solid fa-paper-plane mr-2"></i>
                             Simpan SK
                         </button>
@@ -226,20 +220,240 @@
 
 
 
-{{-- JavaScript untuk menangani kolom dinamis --}}
+{{-- Modal Konfirmasi Simpan --}}
+<div id="confirmModal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all p-0 overflow-hidden">
+            
+            {{-- Header Modal --}}
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    Konfirmasi Data
+                </h3>
+                <button type="button" onclick="closeConfirmModal()" class="text-blue-100 hover:text-white transition-colors">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-md">
+                    <p class="text-sm text-yellow-700 font-medium">
+                        Mohon cek kembali data berikut sebelum menyimpan. Pastikan tidak ada kesalahan ketik.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    {{-- Review Item --}}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Jenis Surat</p>
+                        <p class="text-gray-800 font-medium text-base" id="reviewJenisSurat">-</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Format Nomor SK</p>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gray-100 text-gray-800 font-mono px-2 py-0.5 rounded text-sm font-bold border border-gray-200" id="reviewKode">-</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Tanggal</p>
+                            <p class="text-gray-800 font-medium" id="reviewTanggal">-</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Perihal / Keterangan</p>
+                        <p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm italic" id="reviewPerihal">-</p>
+                    </div>
+                     <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Pembuat Draft</p>
+                        <p class="text-gray-800 font-medium" id="reviewPejabat">-</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="closeConfirmModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors">
+                        Periksa Lagi
+                    </button>
+                    <button type="button" onclick="submitCreateForm()" class="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm shadow-md transition-all flex justify-center items-center gap-2">
+                        <span>Ya, Simpan SK</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Pencarian Klasifikasi --}}
+<div id="klasifikasiSearchModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeKlasifikasiModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all flex flex-col max-h-[85vh]">
+            {{-- Header --}}
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-800">Cari Kode Klasifikasi</h3>
+                <button type="button" onclick="closeKlasifikasiModal()" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 border-b border-gray-100 bg-white">
+                <div class="relative">
+                    <span class="absolute left-4 top-3.5 text-gray-400 text-lg">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="modalSearchInput" 
+                        class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium shadow-sm"
+                        placeholder="Ketik kata kunci (misal: Kepegawaian, Cuti, DL)..." autofocus>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 ml-1">Tekan ENTER untuk mencari atau ketik minimal 2 karakter.</p>
+            </div>
+
+            {{-- Results List --}}
+            <div class="flex-1 overflow-y-auto p-0 bg-gray-50/30" id="modalSearchResults">
+                {{-- Initial State --}}
+                <div class="flex flex-col items-center justify-center h-48 text-gray-400">
+                    <i class="fa-solid fa-keyboard text-4xl mb-3 opacity-20"></i>
+                    <p class="text-sm">Mulai ketik untuk mencari kode.</p>
+                </div>
+            </div>
+            
+            {{-- Footer --}}
+            <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 text-right rounded-b-xl flex justify-between items-center">
+                <span class="text-xs text-gray-400" id="resultCount"></span>
+                <button type="button" onclick="closeKlasifikasiModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium text-sm shadow-sm transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Konfirmasi Simpan --}}
+<div id="confirmModal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all p-0 overflow-hidden">
+            
+            {{-- Header Modal --}}
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    Konfirmasi Data
+                </h3>
+                <button type="button" onclick="closeConfirmModal()" class="text-blue-100 hover:text-white transition-colors">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-md">
+                    <p class="text-sm text-yellow-700 font-medium">
+                        Mohon cek kembali data berikut sebelum menyimpan. Pastikan tidak ada kesalahan ketik.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    {{-- Review Item --}}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Jenis Surat</p>
+                        <p class="text-gray-800 font-medium text-base" id="reviewJenisSurat">-</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Kode Klasifikasi</p>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gray-100 text-gray-800 font-mono px-2 py-0.5 rounded text-sm font-bold border border-gray-200" id="reviewKode">-</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Tanggal</p>
+                            <p class="text-gray-800 font-medium" id="reviewTanggal">-</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Perihal / Keterangan</p>
+                        <p class="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm italic" id="reviewPerihal">-</p>
+                    </div>
+                     <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Pejabat Penandatangan</p>
+                        <p class="text-gray-800 font-medium" id="reviewPejabat">-</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex gap-3">
+                    <button type="button" onclick="closeConfirmModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors">
+                        Periksa Lagi
+                    </button>
+                    <button type="button" onclick="submitCreateForm()" class="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm shadow-md transition-all flex justify-center items-center gap-2">
+                        <span>Ya, Simpan SK</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    // --- CONFIRMATION MODAL LOGIC ---
+    const confirmModal = document.getElementById('confirmModal');
+    
+    window.openConfirmModal = function() {
+        // Validation Check (Manual Simple check)
+        const form = document.getElementById('createSkForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        // Get Values
+        const jenis = document.getElementById('jenisSuratSelect');
+        const jenisText = jenis.options[jenis.selectedIndex].text;
+        const kode = document.getElementById('kodeKlasifikasiInput').value;
+        const perihal = document.getElementsByName('perihal')[0].value || '-';
+        const pejabat = document.getElementsByName('pejabat_penandatangan')[0].value;
+        const tanggal = document.getElementsByName('tanggal_ditetapkan')[0].value;
+        const noAgenda = document.getElementById('nomorAgendaInput').value;
+
+        // Static Office Code
+        const kodeKantor = 'B7.33';
+
+        // Construct Full SK Number Format
+        // Format: {nomor_agenda}/{kode_kantor}/{kode_klasifikasi}
+        const fullFormat = `${noAgenda}/${kodeKantor}/${kode}`;
+
+        // Populate Modal
+        document.getElementById('reviewJenisSurat').textContent = jenisText;
+        document.getElementById('reviewKode').textContent = fullFormat; // Displpay Full Format here
+        document.getElementById('reviewPerihal').textContent = perihal;
+        document.getElementById('reviewPejabat').textContent = pejabat;
+        document.getElementById('reviewTanggal').textContent = tanggal;
+
+        // Show Modal
+        confirmModal.classList.remove('hidden');
+    };
+
+    window.closeConfirmModal = function() {
+        confirmModal.classList.add('hidden');
+    };
+
+    window.submitCreateForm = function() {
+        document.getElementById('createSkForm').submit();
+    };
+
 document.addEventListener('DOMContentLoaded', function() {
     const jenisSuratSelect = document.getElementById('jenisSuratSelect');
-    const sertifikatFields = document.getElementById('sertifikatFields');
-    const jumlahSertifikatInput = document.getElementById('jumlahSertifikatInput');
-    const previewKodeOtomatis = document.getElementById('previewKodeOtomatis');
-    const previewRangeText = document.getElementById('previewRangeText');
     const kodeKlasifikasiInput = document.getElementById('kodeKlasifikasiInput');
     const fileInput = document.getElementById('dropzone-file');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
     const fileNameText = document.getElementById('fileNameText');
-
-
 
     // File Input Name Display & Validation
     if(fileInput) {
@@ -263,25 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fungsi untuk update preview range sertifikat
-    function updateCertificatePreview() {
-        const count = parseInt(jumlahSertifikatInput.value) || 0;
-        
-        if (count > 0) {
-            // Start from 1 as requested
-            previewKodeOtomatis.value = `SERTIFIKAT-{1} s/d SERTIFIKAT-{${count}}`;
-            previewRangeText.textContent = `Total ${count} sertifikat akan dibuat.`;
-        } else {
-            previewKodeOtomatis.value = 'SERTIFIKAT-...';
-            previewRangeText.textContent = 'Masukkan jumlah untuk melihat range.';
-        }
-    }
-
-    // Event listener jumlah sertifikat
-    if (jumlahSertifikatInput) {
-        jumlahSertifikatInput.addEventListener('input', updateCertificatePreview);
-    }
-
     // Event listener untuk perubahan jenis surat
     jenisSuratSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
@@ -299,12 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clear kode klasifikasi agar user input sendiri
             kodeKlasifikasiInput.value = '';
             kodeKlasifikasiInput.placeholder = 'Masukkan kode klasifikasi baru...';
-            
-            // Hide sertifikat fields sementara (logic sertifikat hanya untuk yg sdh ada keywordnya)
-            // Kecuali user ngetik "Sertifikat xxx" nanti? 
-            // Untuk simplifikasi, anggap input baru belum trigger fitur sertifikat kecuali manual logic, 
-            // tapi kita hide dulu biar clear.
-            sertifikatFields.classList.add('hidden');
         } else {
             newJenisSuratField.classList.add('hidden');
             jenisSuratBaruInput.required = false;
@@ -314,14 +503,136 @@ document.addEventListener('DOMContentLoaded', function() {
                 kodeKlasifikasiInput.value = kodeKlasifikasi;
             }
             kodeKlasifikasiInput.placeholder = 'Contoh: B.001';
+        }
+    });
 
-            // Tampilkan/sembunyikan kolom sertifikat
-            if (selectedValue.toLowerCase().includes('sertifikat')) {
-                sertifikatFields.classList.remove('hidden');
-                updateCertificatePreview();
-            } else {
-                sertifikatFields.classList.add('hidden');
-            }
+    // --- KLASIFIKASI MODAL SEARCH LOGIC ---
+    const searchModal = document.getElementById('klasifikasiSearchModal');
+    const modalSearchInput = document.getElementById('modalSearchInput');
+    const modalResults = document.getElementById('modalSearchResults');
+    const resultCount = document.getElementById('resultCount');
+    
+    const searchInput = document.getElementById('kodeKlasifikasiInput'); // Main input
+    const selectedInfo = document.getElementById('selectedKlasifikasiInfo');
+    const selectedNama = document.getElementById('selectedNamaDisplay');
+    const selectedUraian = document.getElementById('selectedUraianDisplay');
+    const clearBtn = document.getElementById('clearKlasifikasiBtn');
+
+    let debounceTimer;
+
+    // Open Modal
+    window.openKlasifikasiModal = function() {
+        searchModal.classList.remove('hidden');
+        modalSearchInput.value = '';
+        modalResults.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-48 text-gray-400">
+                <i class="fa-solid fa-keyboard text-4xl mb-3 opacity-20"></i>
+                <p class="text-sm">Mulai ketik untuk mencari kode.</p>
+            </div>
+        `;
+        resultCount.textContent = '';
+        setTimeout(() => modalSearchInput.focus(), 100);
+        document.body.style.overflow = 'hidden'; // Prevent scroll
+    };
+
+    // Close Modal
+    window.closeKlasifikasiModal = function() {
+        searchModal.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scroll
+    };
+
+    // Debounced Search in Modal
+    modalSearchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+            return;
+        }
+
+        modalResults.innerHTML = `
+            <div class="flex items-center justify-center h-32 text-blue-500">
+                <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+            </div>
+        `;
+
+        debounceTimer = setTimeout(() => {
+            fetch(`/klasifikasi/search?term=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderResults(data);
+                })
+                .catch(err => {
+                    modalResults.innerHTML = `<p class="p-4 text-center text-red-500 text-sm">Terjadi kesalahan. Silakan coba lagi.</p>`;
+                });
+        }, 300);
+    });
+
+    function renderResults(data) {
+        modalResults.innerHTML = '';
+        resultCount.textContent = `Ditemukan ${data.length} hasil`;
+
+        if (data.length === 0) {
+            modalResults.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-48 text-gray-400">
+                    <i class="fa-solid fa-folder-open text-4xl mb-3 opacity-20"></i>
+                    <p class="text-sm">Tidak ditemukan hasil yang cocok.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const list = document.createElement('div');
+        list.className = 'divide-y divide-gray-100 bg-white';
+
+        data.forEach(item => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-full text-left px-6 py-3 hover:bg-blue-50 transition-colors flex flex-col gap-1 group';
+            btn.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="font-mono font-bold text-blue-600 bg-blue-50 group-hover:bg-white px-2 py-0.5 rounded text-xs border border-blue-100">${item.kode}</span>
+                </div>
+                <p class="text-sm font-medium text-gray-800">${item.nama}</p>
+                ${item.uraian ? `<p class="text-xs text-gray-500 line-clamp-1">${item.uraian}</p>` : ''}
+            `;
+            
+            btn.addEventListener('click', () => {
+                selectKlasifikasi(item);
+                closeKlasifikasiModal();
+            });
+            list.appendChild(btn);
+        });
+
+        modalResults.appendChild(list);
+    }
+
+    // Function saat item dipilih
+    function selectKlasifikasi(item) {
+        searchInput.value = item.kode;
+        selectedNama.textContent = item.nama;
+        selectedUraian.textContent = item.uraian || '-';
+        
+        selectedInfo.classList.remove('hidden');
+        
+        // Highlight input
+        searchInput.classList.add('border-green-500', 'ring-1', 'ring-green-500');
+        setTimeout(() => {
+            searchInput.classList.remove('border-green-500', 'ring-1', 'ring-green-500');
+        }, 1000);
+    }
+
+    // Clear Selection
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        selectedInfo.classList.add('hidden');
+        searchInput.focus();
+    });
+    
+    // Close modal on escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !searchModal.classList.contains('hidden')) {
+            closeKlasifikasiModal();
         }
     });
 
@@ -333,11 +644,6 @@ document.addEventListener('DOMContentLoaded', function() {
          if (kodeKlasifikasi && !kodeKlasifikasiInput.value) {
             kodeKlasifikasiInput.value = kodeKlasifikasi;
          }
-
-        if (jenisSuratSelect.value.toLowerCase().includes('sertifikat')) {
-            sertifikatFields.classList.remove('hidden');
-            updateCertificatePreview();
-        }
     }
 });
 </script>

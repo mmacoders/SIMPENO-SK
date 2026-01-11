@@ -299,23 +299,6 @@ class SKController extends Controller
     }
 
     /**
-     * Display the certificate specific archive page.
-     */
-    public function sertifikatIndex()
-    {
-        // Filter hanya yang mengandung kata 'sertifikat' di jenis_surat
-        $dataSertifikat = SK::with(['user'])
-            ->where('jenis_surat', 'like', '%sertifikat%')
-            ->latest()
-            ->get();
-            
-        $totalSertifikat = $dataSertifikat->count();
-        $totalPenerima = $dataSertifikat->sum('jumlah_penerima');
-        
-        return view('sertifikat.index', compact('dataSertifikat', 'totalSertifikat', 'totalPenerima'));
-    }
-
-    /**
      * Download PDF file.
      */
     public function download(Request $request)

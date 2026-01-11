@@ -26,23 +26,21 @@
             <i class="fa-solid fa-box-archive mr-3"></i>
             <span class="font-semibold">Arsip SK</span>
         </a>
-
-        {{-- Arsip Sertifikat (User Only) --}}
-        <a href="{{ route('sertifikat.index') }}" class="flex items-center p-3 rounded-lg
-            {{ request()->routeIs('sertifikat.index') ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-l-4 border-blue-300 shadow-md' : 'text-blue-100 hover:bg-gradient-to-r hover:from-blue-600/70 hover:to-purple-600/70 hover:text-white' }}
-            transition-all duration-200 group">
-            <i class="fa-solid fa-certificate mr-3"></i>
-            <span class="font-medium">Arsip Sertifikat</span>
-        </a>
-
         @endif
 
         {{-- Admin Menu --}}
         @if(auth()->user()->role === 'admin')
-            <div class="pt-4 pb-2">
-                <p class="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Administrator</p>
-            </div>
-
+        <div class="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
+            Start Master
+        </div>
+        
+        <a href="{{ route('klasifikasi.index') }}" class="flex items-center p-3 rounded-lg
+            {{ request()->routeIs('klasifikasi.*') ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-l-4 border-blue-300 shadow-md' : 'text-blue-100 hover:bg-gradient-to-r hover:from-blue-600/70 hover:to-purple-600/70 hover:text-white' }}
+            transition-all duration-200 group">
+            <i class="fa-solid fa-tags mr-3"></i>
+            <span class="font-medium">Master Klasifikasi</span>
+        </a>
+        
             <a href="{{ route('kategori-sks.index') }}" class="flex items-center p-3 rounded-lg
                 {{ request()->routeIs('kategori-sks.index') ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-l-4 border-blue-300 shadow-md' : 'text-blue-100 hover:bg-gradient-to-r hover:from-blue-600/70 hover:to-purple-600/70 hover:text-white' }}
                 transition-all duration-200 group">

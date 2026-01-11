@@ -9,6 +9,7 @@ class KlasifikasiArsip extends Model
     protected $fillable = [
         'kode', 
         'nama', 
-        'uraian'
+        'uraian',
+        'kategori_sk_id'
     ];
 }

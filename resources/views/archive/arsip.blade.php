@@ -106,7 +106,7 @@
                                         {{ $sk->jenis_surat }}
                                     </span>
                                     <span class="bg-purple-50 text-purple-600 border border-purple-100 px-3 py-1 rounded-full text-xs font-semibold font-mono">
-                                        {{ $sk->kode_klasifikasi }}
+                                        {{ $sk->nomor_sk }}/B7.33/{{ $sk->kode_klasifikasi }}
                                     </span>
                                     @if(!empty($sk->file_pdf))
                                     <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1 rounded-full text-xs font-semibold">
@@ -146,7 +146,7 @@
                                     <i class="fa-solid fa-signature text-xs"></i>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-400 font-medium">Penandatangan</p>
+                                    <p class="text-xs text-gray-400 font-medium">Pembuat Draft</p>
                                     <p class="text-gray-700 font-medium">{{ $sk->pejabat_penandatangan }}</p>
                                 </div>
                             </div>
@@ -163,25 +163,18 @@
 
                     <!-- Action Buttons -->
                     <div class="flex lg:flex-col gap-2 lg:min-w-[140px]">
-                        {{-- Logika Tombol Lihat --}}
-                        @if(str_contains(strtolower($sk->jenis_surat), 'sertifikat'))
-                             <a href="{{ route('sertifikat.index') }}" 
-                                class="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
-                                <i class="fa-solid fa-list-check"></i>
-                                <span>Detail</span>
-                            </a>
-                        @elseif(!empty($sk->file_pdf))
-                            <button type="button" data-id="{{ $sk->id }}"
-                                class="btn-view flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
-                                <i class="fa-solid fa-eye"></i>
-                                <span>Lihat</span>
-                            </button>
+                        @if(!empty($sk->file_pdf))
+                        <button type="button" data-id="{{ $sk->id }}"
+                            class="btn-view flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>Lihat</span>
+                        </button>
                         @else
-                            <button type="button" disabled
-                                class="flex items-center justify-center gap-2 bg-gray-100 text-gray-400 px-4 py-2.5 rounded-lg font-medium text-sm cursor-not-allowed">
-                                <i class="fa-solid fa-eye-slash"></i>
-                                <span>Tidak Ada</span>
-                            </button>
+                        <button type="button" disabled
+                            class="flex items-center justify-center gap-2 bg-gray-100 text-gray-400 px-4 py-2.5 rounded-lg font-medium text-sm cursor-not-allowed">
+                            <i class="fa-solid fa-eye-slash"></i>
+                            <span>Tidak Ada</span>
+                        </button>
                         @endif
 
                         @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->id() === $sk->user_id))
@@ -298,12 +291,11 @@
 
                                 <!-- PEJABAT PENANDATANGAN -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pembuat </label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pembuat Draft</label>
                                     <input type="text" name="pejabat_penandatangan" id="edit_pejabat_penandatangan"
-                                        required
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200">
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                                        placeholder="Pembuat Draft">
                                 </div>
-
                                 <!-- PERIHAL -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Perihal</label>
@@ -564,15 +556,6 @@ $(document).on('click', '.btn-edit', function() {
     $('#edit_tanggal_ditetapkan').val(tanggal_ditetapkan);
     $('#edit_pejabat_penandatangan').val(pejabat_penandatangan);
     $('#edit_perihal').val(perihal);
-
-    // LOGIC HIDE UPLOAD UTK SERTIFIKAT
-    if (jenis_surat.toLowerCase().includes('sertifikat')) {
-        $('#edit_file_container').hide();
-    } else {
-        $('#edit_file_container').show();
-        // Reset value input file jika perlu (opsional, browser security prevent overriding value to empty string cleanly besides reset form)
-        // Tapi tampilan current file dll biarkan saja logic backend yg handle
-    }
 
     // Tampilkan modal dan prevent scroll
     $('#editModal').removeClass('hidden');
